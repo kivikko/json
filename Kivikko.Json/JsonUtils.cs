@@ -259,11 +259,15 @@ public static class JsonUtils
             
             switch (c)
             {
-                case '"' when json[i - 1] is not '\\': inQuotes = !inQuotes; stringValue += c; break;
-                case '{' when !inQuotes: brackets++; stringValue += c; break;
-                case '}' when !inQuotes: brackets--; stringValue += c; break;
                 case '[' when !inQuotes: brackets++; stringValue += c; break;
                 case ']' when !inQuotes: brackets--; stringValue += c; break;
+                case '{' when !inQuotes: brackets++; stringValue += c; break;
+                case '}' when !inQuotes: brackets--; stringValue += c; break;
+                
+                case '"' when json[i - 1] is not '\\':
+                    inQuotes = !inQuotes;
+                    stringValue += c;
+                    break;
                 
                 case ',' when !inQuotes && brackets is 0:
                     list.Add(FromJson(stringValue, genericType));
