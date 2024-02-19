@@ -33,12 +33,9 @@ public static class JsonUtils
             .Select(p =>
             {
                 var x = $"\"{p.Name}\":{(p.PropertyType.IsPrimitive ? ToString(p.Value) : ToJson(p.Value))}";
-                Console.WriteLine(x);
                 return x;
             });
 
-        Console.WriteLine();
-        
         return $"{{{string.Join(",", jsonProperties)}}}";
     }
     
