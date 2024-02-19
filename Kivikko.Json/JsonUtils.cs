@@ -1,4 +1,14 @@
-﻿namespace Kivikko.Json;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Text;
+
+namespace Kivikko.Json;
 
 public static class JsonUtils
 {
@@ -353,5 +363,28 @@ public static class JsonUtils
         Save(path, ToJson(obj), Encoding.Default);
     
     public static void Save(string path, object obj, Encoding encoding) =>
-        FileUtils.WriteAllTextIfDifferent(path, ToJson(obj), encoding);
+        WriteAllTextIfDifferent(path, ToJson(obj), encoding);
+    
+    private static void WriteAllTextIfDifferent(string path, string content, Encoding encoding)
+    {
+        if (File.Exists(path))
+        {
+            var newContentHashCode = content.GetHashCode();
+            var oldContentHashCode = File.ReadAllText(path, encoding).GetHashCode();
+            
+            if (newContentHashCode == oldContentHashCode)
+                return;
+        }
+        
+        CreateDirectoryIfNotExist(path);
+        File.WriteAllText(path, content, encoding);
+    }
+
+    private static void CreateDirectoryIfNotExist(string path)
+    {
+        var directory = Path.GetDirectoryName(path);
+
+        if (directory is not null && !Directory.Exists(directory))
+            Directory.CreateDirectory(directory);
+    }
 }
