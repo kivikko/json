@@ -272,7 +272,7 @@ public static class JsonUtils
         if (string.IsNullOrWhiteSpace(json))
             return Array.Empty<object>();
         
-        var list = new List<object>();
+        var list = new List<object>(json.Length / 10);
         var stringBuilder = new StringBuilder(json.Length);
         var genericType = type.IsArray ? type.GetElementType() : type.GenericTypeArguments.FirstOrDefault();
         var inQuotes = false;
@@ -313,7 +313,7 @@ public static class JsonUtils
 
     private static Dictionary<string, string> GetValues(string json)
     {
-        var values       = new Dictionary<string, string>();
+        var values       = new Dictionary<string, string>(json.Length / 10);
         var keyBuilder   = new StringBuilder();
         var valueBuilder = new StringBuilder();
         var isKeyReading    = false;

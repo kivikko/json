@@ -1,5 +1,6 @@
 ﻿using BenchmarkDotNet.Running;
 using Kivikko.Json.Benchmark;
+using Kivikko.Json.Benchmark.Model;
 
 while (true)
 {
@@ -7,20 +8,35 @@ while (true)
     Console.WriteLine("2 - Self-written Benchmark");
     Console.WriteLine("0 - Exit");
     
-    var key = Console.ReadKey();
+    var line = Console.ReadLine();
     Console.WriteLine();
     
-    switch (key.Key)
+    switch (line)
     {
-        case ConsoleKey.D1 or ConsoleKey.NumPad1:
+        case "1":
             BenchmarkRunner.Run<JsonBenchmark>();
             break;
         
-        case ConsoleKey.D2 or ConsoleKey.NumPad2:
-            SelfWrittenBenchmark.Run(100000);
+        case "2":
+            SelfWrittenBenchmark.Run(ReadInstanceType(), count: 10000);
             break;
         
-        case ConsoleKey.D0 or ConsoleKey.NumPad0:
+        case "0":
             return;
     }
+}
+
+TestFactory.InstanceType ReadInstanceType()
+{
+    WriteInstruction();
+    var line = Console.ReadLine();
+    return int.TryParse(line, out var i) ? (TestFactory.InstanceType)i : 0;
+}
+
+void WriteInstruction()
+{
+    Console.WriteLine("Choose an object to benchmark:");
+    
+    foreach (var type in Enum.GetValues(typeof(TestFactory.InstanceType)))
+        Console.WriteLine($"{(int)type} - {type}");
 }
