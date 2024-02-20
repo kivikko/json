@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -96,7 +95,6 @@ public static class JsonUtils
     private static string ToString(ITuple tuple)
     {
         var stringBuilder = new StringBuilder();
-        // var toString = new string[tuple.Length];
         stringBuilder.Append("{");
         for (var i = 0; i < tuple.Length; i++)
         {
@@ -105,13 +103,10 @@ public static class JsonUtils
             stringBuilder.Append("\":");
             stringBuilder.Append(ToJson(tuple[i]));
             stringBuilder.Append(",");
-            
-            // toString[i] = $"\"Item{i + 1}\":{ToJson(tuple[i])}";
         }
         stringBuilder.Remove(stringBuilder.Length - 1, 1);
         stringBuilder.Append("}");
         return stringBuilder.ToString();
-        // return $"{{{string.Join(",", toString)}}}";
     }
 
     public static T FromJsonOrNew<T>(string json)
@@ -316,7 +311,6 @@ public static class JsonUtils
         return type.BaseType == typeof(Array) ? list.ToArray() : list;
     }
 
-    [SuppressMessage("ReSharper.DPA", "DPA0000: DPA issues")]
     private static Dictionary<string, string> GetValues(string json)
     {
         var values       = new Dictionary<string, string>();
