@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -12,6 +13,8 @@ namespace Kivikko.Json;
 
 public static class JsonUtils
 {
+    private static readonly char[] Quote = { '"' };
+    
     public static string ToJson(object obj)
     {
         if (obj is null) return "null";
@@ -30,11 +33,7 @@ public static class JsonUtils
             .Where(x => x.CanWrite)
             .Select(p => new { p.Name, p.PropertyType, Value = p.GetValue(obj) })
             .Where(p => p.Value is not null && !IsDefaultValue(p.PropertyType, p.Value))
-            .Select(p =>
-            {
-                var x = $"\"{p.Name}\":{(p.PropertyType.IsPrimitive ? ToString(p.Value) : ToJson(p.Value))}";
-                return x;
-            });
+            .Select(p => $"\"{p.Name}\":{(p.PropertyType.IsPrimitive ? ToString(p.Value) : ToJson(p.Value))}");
 
         return $"{{{string.Join(",", jsonProperties)}}}";
     }
@@ -63,22 +62,56 @@ public static class JsonUtils
         _ => obj.ToString()
     };
 
-    private static string ToString(IDictionary dictionary) => dictionary
-        .Keys.Cast<object>()
-        .Aggregate("{", (current, key) => current + $"\"{key}\":{ToJson(dictionary[key])},").TrimEnd(',') + "}";
+    private static string ToString(IDictionary dictionary)
+    {
+        var stringBuilder = new StringBuilder();
+        stringBuilder.Append("{");
+        foreach (DictionaryEntry entry in dictionary)
+        {
+            stringBuilder.Append("\"");
+            stringBuilder.Append(entry.Key);
+            stringBuilder.Append("\":");
+            stringBuilder.Append(ToJson(entry.Value));
+            stringBuilder.Append(",");
+        }
+        stringBuilder.Remove(stringBuilder.Length - 1, 1);
+        stringBuilder.Append("}");
+        return stringBuilder.ToString();
+    }
 
-    private static string ToString(IEnumerable enumerable) => enumerable
-        .Cast<object>()
-        .Aggregate("[", (current, x) => current + ToJson(x) + ",").TrimEnd(',') + "]";
+    private static string ToString(IEnumerable enumerable)
+    {
+        var stringBuilder = new StringBuilder();
+        stringBuilder.Append("[");
+        foreach (var obj in enumerable)
+        {
+            stringBuilder.Append(ToJson(obj));
+            stringBuilder.Append(",");
+        }
+        stringBuilder.Remove(stringBuilder.Length - 1, 1);
+        stringBuilder.Append("]");
+        return stringBuilder.ToString();
+    }
 
     private static string ToString(ITuple tuple)
     {
-        var toString = new string[tuple.Length];
-        
+        var stringBuilder = new StringBuilder();
+        // var toString = new string[tuple.Length];
+        stringBuilder.Append("{");
         for (var i = 0; i < tuple.Length; i++)
-            toString[i] = $"\"Item{i + 1}\":{ToJson(tuple[i])}";
-        
-        return $"{{{string.Join(",", toString)}}}";
+        {
+            stringBuilder.Append("\"Item");
+            stringBuilder.Append(i + 1);
+            stringBuilder.Append("\":");
+            stringBuilder.Append(ToJson(tuple[i]));
+            stringBuilder.Append(",");
+            
+            // toString[i] = $"\"Item{i + 1}\":{ToJson(tuple[i])}";
+        }
+        stringBuilder.Remove(stringBuilder.Length - 1, 1);
+        stringBuilder.Append("}");
+        return stringBuilder.ToString();
+        // return $"{{{string.Join(",", toString)}}}";
     }
 
     public static T FromJsonOrNew<T>(string json)
@@ -113,20 +146,20 @@ public static class JsonUtils
     private static Dictionary<Type, Func<string, object>> _parseDictionary;
     private static Dictionary<Type, Func<string, object>> ParseDictionary => _parseDictionary ??= new Dictionary<Type, Func<string, object>>
     {
-        [typeof(bool)]     = json => bool   .TryParse(json.Trim('"'), out var value) ? value : default,
-        [typeof(byte)]     = json => byte   .TryParse(json.Trim('"'), out var value) ? value : default,
-        [typeof(sbyte)]    = json => sbyte  .TryParse(json.Trim('"'), out var value) ? value : default,
-        [typeof(char)]     = json => char   .TryParse(json.Trim('"'), out var value) ? value : default,
-        [typeof(decimal)]  = json => decimal.TryParse(json.Trim('"'), NumberStyles.Any, CultureInfo.InvariantCulture, out var value) ? value : default,
-        [typeof(double)]   = json => double .TryParse(json.Trim('"'), NumberStyles.Any, CultureInfo.InvariantCulture, out var value) ? value : default,
-        [typeof(float)]    = json => float  .TryParse(json.Trim('"'), NumberStyles.Any, CultureInfo.InvariantCulture, out var value) ? value : default,
-        [typeof(int)]      = json => int    .TryParse(json.Trim('"'), out var value) ? value : default,
-        [typeof(uint)]     = json => uint   .TryParse(json.Trim('"'), out var value) ? value : default,
-        [typeof(long)]     = json => long   .TryParse(json.Trim('"'), out var value) ? value : default,
-        [typeof(ulong)]    = json => ulong  .TryParse(json.Trim('"'), out var value) ? value : default,
-        [typeof(short)]    = json => short  .TryParse(json.Trim('"'), out var value) ? value : default,
-        [typeof(ushort)]   = json => ushort .TryParse(json.Trim('"'), out var value) ? value : default,
-        [typeof(string)]   = json => json is null or "null" or "" ? null : json.Trim('"'),
+        [typeof(bool)]     = json => bool   .TryParse(json.Trim(Quote), out var value) ? value : default,
+        [typeof(byte)]     = json => byte   .TryParse(json.Trim(Quote), out var value) ? value : default,
+        [typeof(sbyte)]    = json => sbyte  .TryParse(json.Trim(Quote), out var value) ? value : default,
+        [typeof(char)]     = json => char   .TryParse(json.Trim(Quote), out var value) ? value : default,
+        [typeof(decimal)]  = json => decimal.TryParse(json.Trim(Quote), NumberStyles.Any, CultureInfo.InvariantCulture, out var value) ? value : default,
+        [typeof(double)]   = json => double .TryParse(json.Trim(Quote), NumberStyles.Any, CultureInfo.InvariantCulture, out var value) ? value : default,
+        [typeof(float)]    = json => float  .TryParse(json.Trim(Quote), NumberStyles.Any, CultureInfo.InvariantCulture, out var value) ? value : default,
+        [typeof(int)]      = json => int    .TryParse(json.Trim(Quote), out var value) ? value : default,
+        [typeof(uint)]     = json => uint   .TryParse(json.Trim(Quote), out var value) ? value : default,
+        [typeof(long)]     = json => long   .TryParse(json.Trim(Quote), out var value) ? value : default,
+        [typeof(ulong)]    = json => ulong  .TryParse(json.Trim(Quote), out var value) ? value : default,
+        [typeof(short)]    = json => short  .TryParse(json.Trim(Quote), out var value) ? value : default,
+        [typeof(ushort)]   = json => ushort .TryParse(json.Trim(Quote), out var value) ? value : default,
+        [typeof(string)]   = json => json is null or "null" or "" ? null : json.Trim(Quote),
     };
 
     private static IDictionary GetDictionaryFromJson(string json, Type type)
@@ -151,19 +184,19 @@ public static class JsonUtils
     }
     
     private static object GetEnumFromJson(string json, Type type) =>
-        Enum.ToObject(type, int.TryParse(json.Trim('"'), out var value) ? value : 0);
+        Enum.ToObject(type, int.TryParse(json.Trim(Quote), out var value) ? value : 0);
 
-    private static object GetDateTimeFromJson(string json)
+    private static DateTime GetDateTimeFromJson(string json)
     {
-        var str = json.Trim('"');
-        var dateTime = DateTime.TryParse(json.Trim('"'), out var value) ? value : new DateTime();
+        var str = json.Trim(Quote);
+        var dateTime = DateTime.TryParse(json.Trim(Quote), out var value) ? value : new DateTime();
         return str.EndsWith("Z", StringComparison.InvariantCultureIgnoreCase)
             ? dateTime.ToUniversalTime()
             : dateTime;
     }
 
-    private static object GetTimeSpanFromJson(string json) =>
-        TimeSpan.TryParse(json.Trim('"'), out var value) ? value : new TimeSpan();
+    private static TimeSpan GetTimeSpanFromJson(string json) =>
+        TimeSpan.TryParse(json.Trim(Quote), out var value) ? value : new TimeSpan();
 
     private static object GetObjectFromJson(string json, Type type)
     {
@@ -245,7 +278,7 @@ public static class JsonUtils
             return Array.Empty<object>();
         
         var list = new List<object>();
-        var stringValue = string.Empty;
+        var stringBuilder = new StringBuilder(json.Length);
         var genericType = type.IsArray ? type.GetElementType() : type.GenericTypeArguments.FirstOrDefault();
         var inQuotes = false;
         var brackets = 0;
@@ -256,38 +289,39 @@ public static class JsonUtils
             
             switch (c)
             {
-                case '[' when !inQuotes: brackets++; stringValue += c; break;
-                case ']' when !inQuotes: brackets--; stringValue += c; break;
-                case '{' when !inQuotes: brackets++; stringValue += c; break;
-                case '}' when !inQuotes: brackets--; stringValue += c; break;
+                case '[' when !inQuotes: brackets++; stringBuilder.Append(c); break;
+                case ']' when !inQuotes: brackets--; stringBuilder.Append(c); break;
+                case '{' when !inQuotes: brackets++; stringBuilder.Append(c); break;
+                case '}' when !inQuotes: brackets--; stringBuilder.Append(c); break;
                 
                 case '"' when json[i - 1] is not '\\':
                     inQuotes = !inQuotes;
-                    stringValue += c;
+                    stringBuilder.Append(c);
                     break;
                 
                 case ',' when !inQuotes && brackets is 0:
-                    list.Add(FromJson(stringValue, genericType));
-                    stringValue = string.Empty;
+                    list.Add(FromJson(stringBuilder.ToString(), genericType));
+                    stringBuilder.Clear();
                     break;
                 
                 default:
-                    stringValue += c;
+                    stringBuilder.Append(c);
                     break;
             }
         }
         
-        if (!string.IsNullOrWhiteSpace(stringValue) && !inQuotes && brackets is 0)
-            list.Add(FromJson(stringValue, genericType));
+        if (stringBuilder.Length > 0 && !inQuotes && brackets is 0)
+            list.Add(FromJson(stringBuilder.ToString(), genericType));
         
         return type.BaseType == typeof(Array) ? list.ToArray() : list;
     }
 
+    [SuppressMessage("ReSharper.DPA", "DPA0000: DPA issues")]
     private static Dictionary<string, string> GetValues(string json)
     {
-        var values = new Dictionary<string, string>();
-        var key    = string.Empty;
-        var value  = string.Empty;
+        var values       = new Dictionary<string, string>();
+        var keyBuilder   = new StringBuilder();
+        var valueBuilder = new StringBuilder();
         var isKeyReading    = false;
         var isValueReading  = false;
         var isValueInQuotes = false;
@@ -299,17 +333,17 @@ public static class JsonUtils
             
             switch (c)
             {
-                case '[' when isValueReading: value += c; brackets++; break;
-                case ']' when isValueReading: value += c; brackets--; break;
-                case '{' when isValueReading: value += c; brackets++; break;
-                case '}' when isValueReading: value += c; brackets--; break;
+                case '[' when isValueReading: valueBuilder.Append(c); brackets++; break;
+                case ']' when isValueReading: valueBuilder.Append(c); brackets--; break;
+                case '{' when isValueReading: valueBuilder.Append(c); brackets++; break;
+                case '}' when isValueReading: valueBuilder.Append(c); brackets--; break;
                 
                 case '"' when json[i - 1] is not '\\':
                     switch (isKeyReading, isValueReading)
                     {
                         case (false, false): isKeyReading = true;  break;
                         case (true, false):  isKeyReading = false; break;
-                        case (false, true):  value += c; isValueInQuotes = !isValueInQuotes; break;
+                        case (false, true):  valueBuilder.Append(c); isValueInQuotes = !isValueInQuotes; break;
                     }
                     break;
                 
@@ -319,20 +353,20 @@ public static class JsonUtils
                 
                 case ',' when isValueReading && brackets is 0 && !isValueInQuotes:
                     isValueReading = false;
-                    values.Add(key, value);
-                    key   = string.Empty;
-                    value = string.Empty;
+                    values.Add(keyBuilder.ToString(), valueBuilder.ToString());
+                    keyBuilder.Clear();
+                    valueBuilder.Clear();
                     break;
                 
                 default:
-                    if (isKeyReading) key += c;
-                    else if (isValueReading) value += c;
+                    if (isKeyReading) keyBuilder.Append(c);
+                    else if (isValueReading) valueBuilder.Append(c);
                     break;
             }
         }
         
-        if (!string.IsNullOrWhiteSpace(key))
-            values.Add(key, value);
+        if (keyBuilder.Length > 0)
+            values.Add(keyBuilder.ToString(), valueBuilder.ToString());
         
         return values;
     }
