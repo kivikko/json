@@ -94,3 +94,19 @@ DefaultJob : .NET 7.0.16 (7.0.1624.6629), X64 RyuJIT AVX2
 - Error  : Half of 99.9% confidence interval
 - StdDev : Standard deviation of all measurements
 - 1 ms   : 1 Millisecond (0.001 sec)
+
+## Dependencies
+
+This project uses the following NuGet packages in the Test and Benchmark projects:
+
+- [BenchmarkDotNet](https://www.nuget.org/packages/BenchmarkDotNet)
+- [Newtonsoft.Json](https://www.nuget.org/packages/Newtonsoft.Json)
+- [Microsoft.NET.Test.Sdk](https://www.nuget.org/packages/Microsoft.NET.Test.Sdk)
+- [NUnit](https://www.nuget.org/packages/NUnit)
+- [System.Text.Json](https://www.nuget.org/packages/System.Text.Json)
+
+All packages listed are distributed under their own licenses.
+
+## License
+
+This project is licensed under the terms of the MIT license. See [LICENSE](LICENSE) for more details.
