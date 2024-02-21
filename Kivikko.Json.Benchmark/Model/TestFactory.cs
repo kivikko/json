@@ -4,26 +4,30 @@ public static class TestFactory
 {
     public enum InstanceType
     {
-        ArrayInt = 1,
-        ArrayString,
-        DictionaryIntString,
+        IntArray = 1,
+        StringArray,
+        IntStringDictionary,
         DeepTestClass,
         MainTestObject,
-        ArrayTestClass,
-        ArrayMainTestObject,
+        TestClassArray,
+        MainTestObjectArray,
+        Product,
+        ProductArray,
     }
 
     private static readonly Random Random = new();
     
     public static object? CreateInstance(InstanceType instanceType) => instanceType switch
     {
-        InstanceType.ArrayInt            => CreateArray<int>(1000),
-        InstanceType.ArrayString         => CreateArray<string>(1000),
-        InstanceType.DictionaryIntString => CreateDictionary<int, string>(1000),
+        InstanceType.IntArray            => CreateArray<int>(1000),
+        InstanceType.StringArray         => CreateArray<string>(1000),
+        InstanceType.IntStringDictionary => CreateDictionary<int, string>(1000),
         InstanceType.DeepTestClass       => CreateDeepTestClass(),
         InstanceType.MainTestObject      => CreateMainTestObject(),
-        InstanceType.ArrayTestClass      => CreateArray<TestClass>(100),
-        InstanceType.ArrayMainTestObject => CreateArray<MainTestClass>(10),
+        InstanceType.TestClassArray      => CreateArray<TestClass>(100),
+        InstanceType.MainTestObjectArray => CreateArray<MainTestClass>(10),
+        InstanceType.Product             => JsonUtils.FromJson<ProductRoot>(ProductJson.LV430880),
+        InstanceType.ProductArray        => CreateArray(100, () => JsonUtils.FromJson<ProductRoot>(ProductJson.LV430880)),
         _ => null
     };
 
@@ -72,10 +76,20 @@ public static class TestFactory
         return dictionary;
     }
 
-    private static T[] CreateArray<T>(int count)
+    private static T[] CreateArray<T>(int count) => CreateArray(count, New<T>);
+
+    private static T[] CreateArray<T>(int count, Func<T> func)
     {
+        if (count < 0)
+        {
+            Console.WriteLine("Input the array size:");
+            var input = Console.ReadLine();
+            count = int.TryParse(input, out var i) ? i : 0;
+            Console.WriteLine();
+        }
+        
         var array = new T[count];
-        for (var i = 0; i < count; i++) array[i] = New<T>();
+        for (var i = 0; i < count; i++) array[i] = func();
         return array;
     }
 

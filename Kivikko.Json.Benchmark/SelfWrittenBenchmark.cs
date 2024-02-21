@@ -21,7 +21,7 @@ public static class SelfWrittenBenchmark
         // Warm-up
         stopwatch.Start();
         
-        for (var i = 0; i < 1000; i++)
+        for (var i = 0; i < 10; i++)
         {
             System.Text.Json.JsonSerializer.Serialize(instance);
             System.Text.Json.JsonSerializer.Deserialize(instanceJson, instanceType);
@@ -54,15 +54,15 @@ public static class SelfWrittenBenchmark
         var d2 = (kivikkoDeserialization / systemDeserialization).ToString("F2");
         
         Console.WriteLine();
-        Console.WriteLine("                | A |   B   |   C   |   D");
-        Console.WriteLine("----------------|---|-------|-------|-------");
-        Console.WriteLine($"Serialization   | 1 | {Format(b1)} | {Format(c1)} | {Format(d1)}");
-        Console.WriteLine($"Deserialization | 1 | {Format(b2)} | {Format(c2)} | {Format(d2)}");
+        Console.WriteLine("                |   S   | N / S | K / N | K / S");
+        Console.WriteLine("----------------|-------|-------|-------|-------");
+        Console.WriteLine($"Serialization   |     1 | {Format(b1)} | {Format(c1)} | {Format(d1)}");
+        Console.WriteLine($"Deserialization |     1 | {Format(b2)} | {Format(c2)} | {Format(d2)}");
         Console.WriteLine();
-        Console.WriteLine("A - System.Text.Json");
-        Console.WriteLine("B - Newtonsoft.Json / System.Text.Json");
-        Console.WriteLine("C - Kivikko.Json / Newtonsoft.Json");
-        Console.WriteLine("D - Kivikko.Json / System.Text.Json");
+        Console.WriteLine("S  - System.Text.Json");
+        Console.WriteLine("N/S - Newtonsoft.Json / System.Text.Json");
+        Console.WriteLine("K/N - Kivikko.Json    / Newtonsoft.Json");
+        Console.WriteLine("K/S - Kivikko.Json    / System.Text.Json");
         Console.WriteLine();
         
         return;
@@ -70,7 +70,18 @@ public static class SelfWrittenBenchmark
         TimeSpan RunAction(string title, Action action)
         {
             stopwatch.Restart();
-            for (var i = 0; i < count; i++) action();
+            
+            Console.WriteLine();
+            var localStopwatch = Stopwatch.StartNew();
+            
+            for (var i = 0; i < count; i++)
+            {
+                localStopwatch.Restart();
+                action();
+                localStopwatch.Stop();
+                Console.WriteLine(localStopwatch.Elapsed.TotalMilliseconds);
+            }
+            
             stopwatch.Stop();
             Console.WriteLine();
             Console.WriteLine(title);

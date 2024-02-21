@@ -4,6 +4,19 @@ namespace Kivikko.Json.Tests;
 
 public class JsonUtilsTests
 {
+    [Test]
+    public void ConvertProduct()
+    {
+        var product     = JsonUtils.FromJson<ProductRoot>(ProductJson.LV430880);
+        var productJson = JsonUtils.ToJson(product);
+        
+        Assert.Multiple(() =>
+        {
+            Assert.That(product, Is.Not.Null);
+            Assert.That(productJson, Is.EqualTo(ProductJson.LV430880));
+        });
+    }
+
     [Test, TestCaseSource(typeof(TestCases), nameof(TestCases.FromJsonCases))]
     public object FromJsonTest(Type type, string obj)
     {

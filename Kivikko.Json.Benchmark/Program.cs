@@ -18,7 +18,7 @@ while (true)
             break;
         
         case "2":
-            SelfWrittenBenchmark.Run(ReadInstanceType(), count: 10000);
+            SelfWrittenBenchmark.Run(ReadInstanceType(), count: 100);
             break;
         
         case "0":

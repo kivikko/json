@@ -10,6 +10,8 @@ This level of portability can be extremely useful in cases where you may want to
 
 For instance, this setup is applicable for plugins designed for programs that utilize different versions of JSON converters, which may be incompatible with each other across various software versions.
 
+This is particularly relevant if your project targets the .NET Framework 4.8 and using `System.Text.Json` is not possible.
+
 Being able to copy the functionality directly into your project circumvents this issue, as the functionality will always align with the version of the project it's copied into.
 
 ## Supported Types
@@ -20,6 +22,7 @@ The `JsonUtils` supports the following .NET types for serialization and deserial
 - Collections implementing `IEnumerable` interface (for instance: `List<T>`, `T[]`, etc.)
 - Dictionaries implementing `IDictionary` interface (for instance: `Dictionary<TKey, TValue>`)
 - Any custom user types (`class`, `struct`) with public properties and/or fields
+- Tuples (for instance: `(T1,T2)`)
 - Temporal types (`DateTime`, `TimeSpan`)
 - Enumerations (`enum`)
 
@@ -63,7 +66,7 @@ JsonUtils.Save(path, myObject);
 
 While `JsonUtils` provides a standalone and easily integratable JSON serialization and deserialization solution, it is important to note that due to its simplicity, there is a trade-off with performance.
 
-In benchmark tests, deserialization of `JsonUtils` performed about 4 times slower than `Newtonsoft.Json` and 7 times slower than `System.Text.Json`.
+In benchmark tests, the performance of JsonUtils was approximately 2 times slower than that of Newtonsoft.Json and 2.5 times slower than that of System.Text.Json.
 
 `BenchmarkDotNet v0.13.12`, Windows 11 (10.0.22621.3155/22H2/2022Update/SunValley2)
 
@@ -75,17 +78,19 @@ Intel Core i7-10510U CPU 1.80GHz, 1 CPU, 8 logical and 4 physical cores
 
 DefaultJob : .NET 7.0.16 (7.0.1624.6629), X64 RyuJIT AVX2
 
-| Method                          | Mean      | Error     | StdDev    |
-|---------------------------------|----------:|----------:|----------:|
-| `NewtonsoftJsonSerialization`   | 12.959 us | 0.2586 us | 0.2978 us |
-| `NewtonsoftJsonDeserialization` | 10.329 us | 0.1994 us | 0.2297 us |
-| `SystemTextJsonSerialization`   |  5.208 us | 0.0943 us | 0.1009 us |
-| `SystemTextJsonDeserialization` |  5.781 us | 0.1013 us | 0.0947 us |
-| `JsonUtilsSerialization`        | 14.644 us | 0.2038 us | 0.1906 us |
-| `JsonUtilsDeserialization`      | 40.824 us | 0.7880 us | 1.1301 us |
+| Method                        | Mean      |  Ratio | Error    | StdDev   |
+|------------------------------ |----------:|-------:|---------:|---------:|
+| SystemTextJsonSerialization   |  16.41 ms |      1 | 0.146 ms | 0.129 ms |
+| NewtonsoftJsonSerialization   |  28.85 ms |   1.76 | 0.527 ms | 0.586 ms |
+| JsonUtilsSerialization        |  46.98 ms |   2.86 | 0.932 ms | 1.179 ms |
+| SystemTextJsonDeserialization |  51.04 ms |      1 | 0.994 ms | 1.458 ms |
+| NewtonsoftJsonDeserialization |  58.06 ms |   1.14 | 1.126 ms | 1.157 ms |
+| JsonUtilsDeserialization      | 113.66 ms |   2.23 | 2.205 ms | 2.708 ms |
+
 
 ###### Legends
 - Mean   : Arithmetic mean of all measurements
+- Ratio  : The ratio of the current mean to the fastest mean
 - Error  : Half of 99.9% confidence interval
 - StdDev : Standard deviation of all measurements
-- 1 us   : 1 Microsecond (0.000001 sec)
+- 1 ms   : 1 Millisecond (0.001 sec)
