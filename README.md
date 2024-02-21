@@ -66,7 +66,7 @@ JsonUtils.Save(path, myObject);
 
 While `JsonUtils` provides a standalone and easily integratable JSON serialization and deserialization solution, it is important to note that due to its simplicity, there is a trade-off with performance.
 
-In benchmark tests, the performance of JsonUtils was approximately 2 times slower than that of Newtonsoft.Json and 2.5 times slower than that of System.Text.Json.
+In benchmark tests, the performance of `JsonUtils` was approximately 2 times slower than that of `Newtonsoft.Json` and 2.5 times slower than that of `System.Text.Json`.
 
 `BenchmarkDotNet v0.13.12`, Windows 11 (10.0.22621.3155/22H2/2022Update/SunValley2)
 
