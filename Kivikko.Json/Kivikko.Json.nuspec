@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package >
+  <metadata>
+    <id>Kivikko.Json</id>
+    <version>1.0.0</version>
+    <title>Kivikko.Json</title>
+    <authors>Sergei Petrov</authors>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="expression">MIT</license>
+    <projectUrl>https://github.com/kivikko/Json/</projectUrl>
+    <description>Kivikko.Json is a .NET serialization tool, designed for convenient object-to-JSON conversion in scenarios where Newtonsoft.Json or System.Text.Json aren't suitable.</description>
+    <releaseNotes/>
+    <copyright>Copyright © 2024 Sergei Petrov</copyright>
+    <tags>JSON</tags>
+  </metadata>
+</package>

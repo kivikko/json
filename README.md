@@ -4,13 +4,11 @@ The Kivikko.Json is designed for quick and easy conversion of .NET objects to JS
 
 This project was developed to address scenarios where the use of [Newtonsoft.Json](https://www.nuget.org/packages/Newtonsoft.Json) or [System.Text.Json](https://www.nuget.org/packages/System.Text.Json) is not feasible.
 
-All serialization and deserialization logic is contained within a single file. This means you can easily copy the `JsonUtils` file into any of your existing .NET projects without the need for additional dependencies or packages.
+All serialization and deserialization logic is contained within a single file. This means you can easily copy the [JsonUtils.cs](https://github.com/kivikko/Json/blob/main/Kivikko.Json/JsonUtils.cs) file into any of your existing .NET projects without the need for additional dependencies or packages.
 
 This level of portability can be extremely useful in cases where you may want to limit the number of third-party dependencies in your project, particularly to avoid potential DLL Hell scenarios. DLL Hell can occur when multiple applications on the same system require different versions of the same dependency, which could lead to compatibility issues.
 
-For instance, this setup is applicable for plugins designed for programs that utilize different versions of JSON converters, which may be incompatible with each other across various software versions.
-
-This is particularly relevant if your project targets the .NET Framework 4.8 and using [System.Text.Json](https://www.nuget.org/packages/System.Text.Json) is not possible.
+For instance, this setup is applicable for plugins designed for programs that utilize different versions of JSON converters, which may be incompatible with each other across various software versions. Or if another plugin with an incompatible (outdated) version of JSON converter is already installed in the software.
 
 Being able to copy the functionality directly into your project circumvents this issue, as the functionality will always align with the version of the project it's copied into.
 
