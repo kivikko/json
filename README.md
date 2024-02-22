@@ -2,7 +2,7 @@
 
 The Kivikko.Json is designed for quick and easy conversion of .NET objects to JSON and vice versa.
 
-This project was developed to address scenarios where the use of `Newtonsoft.Json` or `System.Text.Json` is not feasible.
+This project was developed to address scenarios where the use of [Newtonsoft.Json](https://www.nuget.org/packages/Newtonsoft.Json) or [System.Text.Json](https://www.nuget.org/packages/System.Text.Json) is not feasible.
 
 All serialization and deserialization logic is contained within a single file. This means you can easily copy the `JsonUtils` file into any of your existing .NET projects without the need for additional dependencies or packages.
 
@@ -10,7 +10,7 @@ This level of portability can be extremely useful in cases where you may want to
 
 For instance, this setup is applicable for plugins designed for programs that utilize different versions of JSON converters, which may be incompatible with each other across various software versions.
 
-This is particularly relevant if your project targets the .NET Framework 4.8 and using `System.Text.Json` is not possible.
+This is particularly relevant if your project targets the .NET Framework 4.8 and using [System.Text.Json](https://www.nuget.org/packages/System.Text.Json) is not possible.
 
 Being able to copy the functionality directly into your project circumvents this issue, as the functionality will always align with the version of the project it's copied into.
 
@@ -66,9 +66,9 @@ JsonUtils.Save(path, myObject);
 
 While `JsonUtils` provides a standalone and easily integratable JSON serialization and deserialization solution, it is important to note that due to its simplicity, there is a trade-off with performance.
 
-In benchmark tests, the performance of `JsonUtils` was approximately 2 times slower than that of `Newtonsoft.Json` and 2.5 times slower than that of `System.Text.Json`.
+In benchmark tests, the performance of `JsonUtils` was approximately 2 times slower than that of [Newtonsoft.Json](https://www.nuget.org/packages/Newtonsoft.Json) and 2.5 times slower than that of [System.Text.Json](https://www.nuget.org/packages/System.Text.Json).
 
-`BenchmarkDotNet v0.13.12`, Windows 11 (10.0.22621.3155/22H2/2022Update/SunValley2)
+[BenchmarkDotNet](https://www.nuget.org/packages/BenchmarkDotNet) `v0.13.12`, Windows 11 (10.0.22621.3155/22H2/2022Update/SunValley2)
 
 Intel Core i7-10510U CPU 1.80GHz, 1 CPU, 8 logical and 4 physical cores
 
