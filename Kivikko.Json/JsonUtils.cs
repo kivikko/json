@@ -23,7 +23,8 @@ public static class JsonUtils
     public static object FromJson(string json, Type type) =>
         new JsonReader().ReadFromJson(json, type);
 
-    public static string ToJson(object obj) => new JsonWriter().WriteToJson(obj);
+    public static string ToJson(object obj, bool ignoreNullOrDefaultValues = true) =>
+        new JsonWriter(ignoreNullOrDefaultValues).WriteToJson(obj);
 
     public static bool TryLoad<T>(string path, out T value)
         where T : class, new() =>
@@ -356,7 +357,13 @@ public static class JsonUtils
 
     private class JsonWriter
     {
+        private readonly bool _ignoreNullOrDefaultValues;
         private readonly StringBuilder _stringBuilder = new();
+
+        public JsonWriter(bool ignoreNullOrDefaultValues)
+        {
+            _ignoreNullOrDefaultValues = ignoreNullOrDefaultValues;
+        }
 
         public string WriteToJson(object obj)
         {
@@ -367,8 +374,8 @@ public static class JsonUtils
             switch (obj)
             {
                 case string str: return $"\"{str}\"";
-                case IDictionary dictionary: return new JsonWriter().ToJson(dictionary);
-                case IEnumerable enumerable: return new JsonWriter().ToJson(enumerable);
+                case IDictionary dictionary: return new JsonWriter(_ignoreNullOrDefaultValues).ToJson(dictionary);
+                case IEnumerable enumerable: return new JsonWriter(_ignoreNullOrDefaultValues).ToJson(enumerable);
             }
 
             var hasContent = false;
@@ -379,11 +386,11 @@ public static class JsonUtils
             {
                 if (!property.CanWrite) continue;
                 var value = property.GetValue(obj);
-                if (value is null || IsDefaultValue(property.PropertyType, value)) continue;
+                if (_ignoreNullOrDefaultValues && (value is null || IsDefaultValue(property.PropertyType, value))) continue;
                 _stringBuilder.Append("\"");
                 _stringBuilder.Append(property.Name);
                 _stringBuilder.Append("\":");
-                _stringBuilder.Append(new JsonWriter().WriteToJson(value));
+                _stringBuilder.Append(new JsonWriter(_ignoreNullOrDefaultValues).WriteToJson(value));
                 _stringBuilder.Append(",");
                 hasContent = true;
             }
@@ -396,8 +403,6 @@ public static class JsonUtils
             return _stringBuilder.ToString();
         }
         
-        // ReSharper disable once UnusedMember.Local
-        private static bool IsDefaultValue(object obj) => IsDefaultValue(obj.GetType(), obj);
         private static bool IsDefaultValue(Type type, object obj)
         {
             if (obj is null) return true;
@@ -417,7 +422,8 @@ public static class JsonUtils
             DateTime { Kind: DateTimeKind.Utc }         d => $"\"{d:yyyy-MM-ddTHH:mm:ss}Z\"",
             TimeSpan t => $"\"{t:d\\.hh\\:mm\\:ss\\.fffffff}\"",
             ITuple   t => ToJson(t),
-            _ => obj.ToString()
+            null => "null",
+            _    => obj.ToString()
         };
 
         private string ToJson(IDictionary dictionary)
@@ -428,7 +434,7 @@ public static class JsonUtils
                 _stringBuilder.Append("\"");
                 _stringBuilder.Append(entry.Key);
                 _stringBuilder.Append("\":");
-                _stringBuilder.Append(new JsonWriter().WriteToJson(entry.Value));
+                _stringBuilder.Append(new JsonWriter(_ignoreNullOrDefaultValues).WriteToJson(entry.Value));
                 _stringBuilder.Append(",");
             }
             _stringBuilder.Remove(_stringBuilder.Length - 1, 1);
@@ -441,7 +447,7 @@ public static class JsonUtils
             _stringBuilder.Append("[");
             foreach (var obj in enumerable)
             {
-                _stringBuilder.Append(new JsonWriter().WriteToJson(obj));
+                _stringBuilder.Append(new JsonWriter(_ignoreNullOrDefaultValues).WriteToJson(obj));
                 _stringBuilder.Append(",");
             }
             _stringBuilder.Remove(_stringBuilder.Length - 1, 1);
@@ -457,7 +463,7 @@ public static class JsonUtils
                 _stringBuilder.Append("\"Item");
                 _stringBuilder.Append(i + 1);
                 _stringBuilder.Append("\":");
-                _stringBuilder.Append(new JsonWriter().WriteToJson(tuple[i]));
+                _stringBuilder.Append(new JsonWriter(_ignoreNullOrDefaultValues).WriteToJson(tuple[i]));
                 _stringBuilder.Append(",");
             }
             _stringBuilder.Remove(_stringBuilder.Length - 1, 1);
