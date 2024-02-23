@@ -46,11 +46,11 @@ public static class JsonUtils
         return deserializeObject is not null;
     }
     
-    public static void Save(string path, object obj) =>
-        Save(path, ToJson(obj), Encoding.Default);
+    public static void Save(string path, object obj, bool ignoreNullOrDefaultValues = true) =>
+        Save(path, ToJson(obj, ignoreNullOrDefaultValues), Encoding.Default);
     
-    public static void Save(string path, object obj, Encoding encoding) =>
-        WriteAllTextIfDifferent(path, ToJson(obj), encoding);
+    public static void Save(string path, object obj, Encoding encoding, bool ignoreNullOrDefaultValues = true) =>
+        WriteAllTextIfDifferent(path, ToJson(obj, ignoreNullOrDefaultValues), encoding);
     
     private static void WriteAllTextIfDifferent(string path, string content, Encoding encoding)
     {
