@@ -290,16 +290,35 @@ public static class JsonUtils
         {
             var list = new List<object>();
             var elementType = type.IsArray ? type.GetElementType() : type.GenericTypeArguments.FirstOrDefault();
-                
+            
+            if (elementType is null)
+                return Array.Empty<object>();
+            
             while (_index < json.Length)
             {
                 switch (json[_index])
                 {
                     case '[': _index++; continue;
                     case ',': _index++; continue;
-                    case ']': _index++; return type.IsArray ? list.ToArray() : list;
+                    case ']': _index++; goto quit;
                     default: list.Add(FromJsonPrivate(json, elementType)); break;
                 }
+            }
+            quit:
+            
+            if (type.IsArray)
+            {
+                var typedArray = Array.CreateInstance(elementType, list.Count);
+                list.ToArray().CopyTo(typedArray, 0);
+                return typedArray;
+            }
+            
+            if (type.IsGenericType &&
+                type.GetInterfaces().Any(i => i == typeof(IEnumerable)))
+            {
+                var typedList = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(elementType));
+                foreach (var v in list) typedList.Add(v);
+                return typedList;
             }
 
             return list;

@@ -2,6 +2,7 @@
 using Kivikko.Json.Tests.Models.Model1;
 using Kivikko.Json.Tests.Models.Model2;
 using Kivikko.Json.Tests.Models.Model3;
+using Kivikko.Json.Tests.Models.Model4;
 
 namespace Kivikko.Json.Tests;
 
@@ -30,13 +31,26 @@ public class JsonUtilsTests
     [Test]
     public void ConvertProductTest()
     {
-        var product     = JsonUtils.FromJson<ProductRoot>(ProductJson.LV430880);
+        var product     = JsonUtils.FromJson<ProductRoot>(ProductRoot.LV430880);
         var productJson = JsonUtils.ToJson(product);
         
         Assert.Multiple(() =>
         {
             Assert.That(product, Is.Not.Null);
-            Assert.That(productJson, Is.EqualTo(ProductJson.LV430880));
+            Assert.That(productJson, Is.EqualTo(ProductRoot.LV430880));
+        });
+    }
+
+    [Test]
+    public void ConvertCableTrayItemsTest()
+    {
+        var cableTrayItems     = JsonUtils.FromJson<CableTrayItem[]>(CableTraysDataTest.Json);
+        var cableTrayItemsJson = JsonUtils.ToJson(cableTrayItems);
+        
+        Assert.Multiple(() =>
+        {
+            Assert.That(cableTrayItems, Is.Not.Null);
+            Assert.That(cableTrayItemsJson, Is.EqualTo(CableTraysDataTest.Json));
         });
     }
 
