@@ -153,22 +153,18 @@ public static class JsonUtils
             {
                 switch (json[_index])
                 {
-                    case '{' when !isValueReading: _index++; continue;
-                    case '"' when !isValueReading && memberName is null: _index++; isNameReading = !isNameReading; continue;
-                    case ':': _index++; isValueReading = true; continue;
-                    case ',': _index++; continue;
-                    case '}': _index++; return instance;
+                    case '{' when !isNameReading && !isValueReading: _index++; StartNameReading(); continue;
+                    case '"' when !isNameReading && !isValueReading: _index++; StartNameReading(); continue;
+                    case '"' when isNameReading:   _index++; continue;
+                    case ':' when isNameReading:   _index++; StartValueReading(); continue;
+                    case ',' when !isValueReading: _index++; StartNameReading(); continue;
+                    case '}' when !isValueReading: _index++; return instance;
                         
                     default:
                         if (isNameReading)
                         {
                             _stringBuilder.Append(json[_index]);
                             _index++;
-                        }
-                        else if (_stringBuilder.Length > 0)
-                        {
-                            memberName = _stringBuilder.ToString();
-                            _stringBuilder.Clear();
                         }
                         else if (memberName is not null)
                         {
@@ -245,6 +241,17 @@ public static class JsonUtils
             }
             
             return instance;
+
+            void StartNameReading() => isNameReading = true;
+
+            void StartValueReading()
+            {
+                isNameReading = false;
+                isValueReading = true;
+                if (_stringBuilder.Length <= 0) return;
+                memberName = _stringBuilder.ToString();
+                _stringBuilder.Clear();
+            }
         }
         
         private IDictionary GetDictionaryFromJson(string json, Type type)

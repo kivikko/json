@@ -122,6 +122,7 @@ public class JsonUtilsTests
             yield return new TestCaseData(typeof(Dictionary<int, string>), "{\"1\":\"A\",\"2\":\"B\"}").Returns(new Dictionary<int, string> { [1] = "A", [2] = "B" });
             yield return new TestCaseData(typeof(Dictionary<int, string>), "{\"1\":\"A\",\"2\":\"B\"}").Returns(new Dictionary<int, string> { [1] = "A", [2] = "B" });
             yield return new TestCaseData(typeof(Dictionary<int, Dictionary<int, int>>), "{\"1\":{\"2\":3,\"3\":4},\"2\":{\"3\":4}}").Returns(new Dictionary<int, Dictionary<int, int>> { [1] = new() { [2] = 3, [3] = 4 }, [2] = new() { [3] = 4 } });
+            yield return new TestCaseData(typeof(NestedClass), "{Enum:1,Integer:5}").Returns(new NestedClass { Enum = TestEnum.Value3, Integer = 5});
             yield return new TestCaseData(typeof(NestedClass), "{\"Enum\":1,\"Integer\":5}").Returns(new NestedClass { Enum = TestEnum.Value3, Integer = 5});
             yield return new TestCaseData(typeof(TestClass), "{\"NestedClass\":{\"Bool\":true,\"Double\":3.141592653589793,\"Integer\":5,\"DateTime\":\"2024-01-11T14:15:16+05:00\",\"Time\":\"1.02:03:04.0050060\",\"StringArray\":[\"A\",\"B\",\"C\"],\"StringEnumerable\":[\"K\",\"L\",\"M\"],\"StringList\":[\"X\",\"Y\",\"Z\"],\"Dictionary\":{\"1\":\"One\",\"2\":\"Two\",\"3\":\"Three\"}},\"Classes\":[{},{\"Enum\":-1},{\"Integer\":0},{\"Integer\":1,\"Enum\":1}],\"ClassesDictionary\":{\"0\":{\"Integer\":0},\"1\":{\"Integer\":1},\"2\":{\"Integer\":2}},\"String\":\"Hello\"}").Returns(
                 new TestClass
