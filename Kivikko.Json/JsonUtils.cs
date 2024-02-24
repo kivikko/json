@@ -418,6 +418,7 @@ public static class JsonUtils
             decimal  d => d.ToString(CultureInfo.InvariantCulture),
             double   d => d.ToString(CultureInfo.InvariantCulture),
             float    f => f.ToString(CultureInfo.InvariantCulture),
+            Guid     g => $"\"{g.ToString()}\"",
             Enum     e => Convert.ToInt32(e).ToString(),
             DateTime { Kind: DateTimeKind.Local }       d => $"\"{d:yyyy-MM-ddTHH:mm:sszzz}\"",
             DateTime { Kind: DateTimeKind.Unspecified } d => $"\"{d:yyyy-MM-ddTHH:mm:ss}\"",

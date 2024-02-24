@@ -10,19 +10,20 @@ public class JsonUtilsTests
     [Test]
     public void FromJsonProductRangeTest()
     {
-        var json = Encoding.UTF8.GetString(Resources.TestProducts);
-        var range = JsonUtils.FromJson<Range<Product>>(json);
-        
-        Assert.That(range, Is.Not.Null);
-        Assert.That(range?.Items.Count, Is.EqualTo(5));
+        var oldJson = Encoding.UTF8.GetString(Resources.TestProducts);
+        var range = JsonUtils.FromJson<Range<Product>>(oldJson);
+        var newJson = JsonUtils.ToJson(range, ignoreNullOrDefaultValues: false);
         
         Assert.Multiple(() =>
         {
-            Assert.That(range?.Items[0].ProductItems.Count, Is.EqualTo(5));
-            Assert.That(range?.Items[1].ProductItems.Count, Is.EqualTo(5));
-            Assert.That(range?.Items[2].ProductItems.Count, Is.EqualTo(5));
-            Assert.That(range?.Items[3].ProductItems.Count, Is.EqualTo(5));
-            Assert.That(range?.Items[4].ProductItems.Count, Is.EqualTo(5));
+            Assert.That(range, Is.Not.Null);
+            Assert.That(newJson, Is.EqualTo(oldJson));
+            Assert.That(range.Items, Has.Count.EqualTo(5));
+            Assert.That(range.Items[0].ProductItems, Has.Count.EqualTo(5));
+            Assert.That(range.Items[1].ProductItems, Has.Count.EqualTo(5));
+            Assert.That(range.Items[2].ProductItems, Has.Count.EqualTo(5));
+            Assert.That(range.Items[3].ProductItems, Has.Count.EqualTo(5));
+            Assert.That(range.Items[4].ProductItems, Has.Count.EqualTo(5));
         });
     }
 
@@ -90,6 +91,8 @@ public class JsonUtilsTests
             yield return new TestCaseData(typeof(string), "\"Hello\"").Returns("Hello");
             yield return new TestCaseData(typeof(string), "").Returns(null);
             yield return new TestCaseData(typeof(string), "null").Returns(null);
+            yield return new TestCaseData(typeof(Guid), "da603ef1-6f9f-4303-bc09-3feb947d3ee3").Returns(Guid.Parse("da603ef1-6f9f-4303-bc09-3feb947d3ee3"));
+            yield return new TestCaseData(typeof(Guid), "\"97ab4bef-8089-4bac-a37e-959e86895758\"").Returns(Guid.Parse("97ab4bef-8089-4bac-a37e-959e86895758"));
             yield return new TestCaseData(typeof(DateTime), "\"2024-01-11T14:15:16+05:00\"").Returns(new DateTime(2024, 01, 11, 14, 15, 16, DateTimeKind.Local));
             yield return new TestCaseData(typeof(DateTime), "\"2024-01-11T14:15:16\"").Returns(new DateTime(2024, 01, 11, 14, 15, 16, DateTimeKind.Unspecified));
             yield return new TestCaseData(typeof(DateTime), "\"2024-01-11T14:15:16Z\"").Returns(new DateTime(2024, 01, 11, 14, 15, 16, DateTimeKind.Utc));
@@ -151,6 +154,7 @@ public class JsonUtilsTests
             yield return new TestCaseData(("Hello", new List<int> { 1, 2 })).Returns("{\"Item1\":\"Hello\",\"Item2\":[1,2]}");
             yield return new TestCaseData(1.2).Returns("1.2");
             yield return new TestCaseData("Hello").Returns("\"Hello\"");
+            yield return new TestCaseData(Guid.Parse("da603ef1-6f9f-4303-bc09-3feb947d3ee3")).Returns("\"da603ef1-6f9f-4303-bc09-3feb947d3ee3\"");
             yield return new TestCaseData(TestEnum.Value1).Returns("-1");
             yield return new TestCaseData(TestEnum.Value2).Returns("0");
             yield return new TestCaseData(new DateTime(2024, 01, 11, 14, 15, 16, DateTimeKind.Local)).Returns("\"2024-01-11T14:15:16+05:00\"");
