@@ -1,6 +1,6 @@
 // ReSharper disable NonReadonlyMemberInGetHashCode
 
-namespace Kivikko.Json.Tests.Model;
+namespace Kivikko.Json.Tests.Models.Model1;
 
 public class TestClass
 {

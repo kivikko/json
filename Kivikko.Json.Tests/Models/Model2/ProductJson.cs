@@ -1,4 +1,4 @@
-﻿namespace Kivikko.Json.Tests.Model;
+﻿namespace Kivikko.Json.Tests.Models.Model2;
 
 public class ProductRoot
 {

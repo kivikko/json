@@ -1,11 +1,33 @@
-﻿using Kivikko.Json.Tests.Model;
+﻿using System.Text;
+using Kivikko.Json.Tests.Models.Model1;
+using Kivikko.Json.Tests.Models.Model2;
+using Kivikko.Json.Tests.Models.Model3;
 
 namespace Kivikko.Json.Tests;
 
 public class JsonUtilsTests
 {
     [Test]
-    public void ConvertProduct()
+    public void FromJsonProductRangeTest()
+    {
+        var json = Encoding.UTF8.GetString(Resources.TestProducts);
+        var range = JsonUtils.FromJson<Range<Product>>(json);
+        
+        Assert.That(range, Is.Not.Null);
+        Assert.That(range?.Items.Count, Is.EqualTo(5));
+        
+        Assert.Multiple(() =>
+        {
+            Assert.That(range?.Items[0].ProductItems.Count, Is.EqualTo(5));
+            Assert.That(range?.Items[1].ProductItems.Count, Is.EqualTo(5));
+            Assert.That(range?.Items[2].ProductItems.Count, Is.EqualTo(5));
+            Assert.That(range?.Items[3].ProductItems.Count, Is.EqualTo(5));
+            Assert.That(range?.Items[4].ProductItems.Count, Is.EqualTo(5));
+        });
+    }
+
+    [Test]
+    public void ConvertProductTest()
     {
         var product     = JsonUtils.FromJson<ProductRoot>(ProductJson.LV430880);
         var productJson = JsonUtils.ToJson(product);

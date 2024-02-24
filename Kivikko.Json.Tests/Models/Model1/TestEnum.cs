@@ -1,4 +1,4 @@
-namespace Kivikko.Json.Tests.Model;
+namespace Kivikko.Json.Tests.Models.Model1;
 
 public enum TestEnum
 {

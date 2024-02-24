@@ -95,6 +95,7 @@ public static class JsonUtils
             if (type.IsPrimitive ||
                 type.IsEnum ||
                 type == typeof(string) ||
+                type == typeof(Guid) ||
                 type == typeof(DateTime) ||
                 type == typeof(TimeSpan) ||
                 IsNullableType(type))
@@ -334,6 +335,7 @@ public static class JsonUtils
             [typeof(short)]    = json => short  .TryParse(json.Trim(Quote), out var value) ? value : default,
             [typeof(ushort)]   = json => ushort .TryParse(json.Trim(Quote), out var value) ? value : default,
             [typeof(string)]   = json => json is null or "null" or "" ? null : json.Trim(Quote),
+            [typeof(Guid)]     = json => Guid   .TryParse(json.Trim(Quote), out var value) ? value : default,
         };
         
         private static object GetEnumFromJson(string json, Type type) =>
