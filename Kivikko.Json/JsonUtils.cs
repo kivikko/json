@@ -47,7 +47,7 @@ public static class JsonUtils
     }
     
     public static void Save(string path, object obj, bool ignoreNullOrDefaultValues = true) =>
-        Save(path, ToJson(obj, ignoreNullOrDefaultValues), Encoding.Default);
+        Save(path, obj, Encoding.Default, ignoreNullOrDefaultValues);
     
     public static void Save(string path, object obj, Encoding encoding, bool ignoreNullOrDefaultValues = true) =>
         WriteAllTextIfDifferent(path, ToJson(obj, ignoreNullOrDefaultValues), encoding);
