@@ -17,12 +17,13 @@ Being able to copy the functionality directly into your project circumvents this
 The `JsonUtils` supports the following .NET types for serialization and deserialization:
 - Basic value types (`int`, `double`, `bool`, etc.)
 - `string`
+- `GUID`
+- Enumerations (`enum`)
+- Temporal types (`DateTime`, `TimeSpan`)
+- Tuples (for instance: `(T1,T2)`)
 - Collections implementing `IEnumerable` interface (for instance: `List<T>`, `T[]`, etc.)
 - Dictionaries implementing `IDictionary` interface (for instance: `Dictionary<TKey, TValue>`)
 - Any custom user types (`class`, `struct`) with public properties and/or fields
-- Tuples (for instance: `(T1,T2)`)
-- Temporal types (`DateTime`, `TimeSpan`)
-- Enumerations (`enum`)
 
 Please, be aware that the library will attempt to serialize public properties and fields of your custom types.
 If a type is not listed above, it is not guaranteed to be properly serialized/deserialized by the `JsonUtils` class.

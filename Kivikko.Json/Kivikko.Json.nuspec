@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>Kivikko.Json</id>
-    <version>1.0.3</version>
+    <version>1.0.4</version>
     <title>Kivikko.Json</title>
     <authors>Sergei Petrov</authors>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
