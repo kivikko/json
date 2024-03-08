@@ -23,6 +23,7 @@ The `JsonUtils` supports the following .NET types for serialization and deserial
 - Tuples (for instance: `(T1,T2)`)
 - Collections implementing `IEnumerable` interface (for instance: `List<T>`, `T[]`, etc.)
 - Dictionaries implementing `IDictionary` interface (for instance: `Dictionary<TKey, TValue>`)
+- `HashSet<T>`
 - Any custom user types (`class`, `struct`) with public properties and/or fields
 
 Please, be aware that the library will attempt to serialize public properties and fields of your custom types.

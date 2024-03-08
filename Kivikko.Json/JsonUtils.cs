@@ -200,28 +200,44 @@ public static class JsonUtils
                                 setValue(typedArray);
                             }
                             
-                            else if (
-                                propertyType.IsGenericType &&
-                                propertyType.GetInterfaces().Any(i => i == typeof(IDictionary)) &&
-                                value is IDictionary valueDictionary)
+                            else if (propertyType.IsGenericType)
                             {
-                                var genericArgs = propertyType.GetGenericArguments();
-                                var keyType   = genericArgs[0];
-                                var valueType = genericArgs[1];
-                                var typedDictionary = (IDictionary)Activator.CreateInstance(typeof(Dictionary<,>).MakeGenericType(keyType, valueType));
-                                foreach (DictionaryEntry entry in valueDictionary) typedDictionary.Add(entry.Key, entry.Value);
-                                setValue(typedDictionary);
-                            }
+                                var interfaces = propertyType.GetInterfaces();
+                                
+                                if (interfaces.Any(i => i == typeof(IDictionary)) &&
+                                    value is IDictionary valueDictionary)
+                                {
+                                    var genericArgs = propertyType.GetGenericArguments();
+                                    var keyType = genericArgs[0];
+                                    var valueType = genericArgs[1];
+                                    var typedDictionary = (IDictionary)Activator.CreateInstance(typeof(Dictionary<,>).MakeGenericType(keyType, valueType));
+                                    foreach (DictionaryEntry entry in valueDictionary) typedDictionary.Add(entry.Key, entry.Value);
+                                    setValue(typedDictionary);
+                                }
                             
-                            else if (
-                                propertyType.IsGenericType &&
-                                propertyType.GetInterfaces().Any(i => i == typeof(IEnumerable)) &&
-                                propertyType.GetGenericArguments()[0] is { } listElementType &&
-                                value is ICollection valueCollection)
-                            {
-                                var typedList = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(listElementType));
-                                foreach (var v in valueCollection) typedList.Add(v);
-                                setValue(typedList);
+                                else if (
+                                    interfaces.Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(ISet<>)) &&
+                                    propertyType.GetGenericArguments()[0] is { } setElementType &&
+                                    value is ICollection setValueCollection)
+                                {
+                                    var typedSet = Activator.CreateInstance(typeof(HashSet<>).MakeGenericType(setElementType), setValueCollection);
+                                    setValue(typedSet);
+                                }
+                            
+                                else if (
+                                    interfaces.Any(i => i == typeof(IEnumerable)) &&
+                                    propertyType.GetGenericArguments()[0] is { } listElementType &&
+                                    value is ICollection valueCollection)
+                                {
+                                    var typedList = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(listElementType));
+                                    foreach (var v in valueCollection) typedList.Add(v);
+                                    setValue(typedList);
+                                }
+                                
+                                else
+                                {
+                                    setValue(value);
+                                }
                             }
                             
                             else

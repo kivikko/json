@@ -8,6 +8,7 @@ public class NestedClass
     public TestEnum Enum { get; set; }
     public DateTime? DateTime { get; set; }
     public TimeSpan? Time { get; set; }
+    public HashSet<int>? HashSet { get; set; }
     public string[]? StringArray { get; set; }
     public IEnumerable<string>? StringEnumerable { get; set; }
     public List<string>? StringList { get; set; }

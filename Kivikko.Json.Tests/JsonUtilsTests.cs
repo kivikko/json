@@ -115,6 +115,7 @@ public class JsonUtilsTests
             yield return new TestCaseData(typeof(IEnumerable<int>), "[1,2]").Returns(new[] { 1, 2 });
             yield return new TestCaseData(typeof(List<int>), "[1,2]").Returns(new List<int> { 1, 2 });
             yield return new TestCaseData(typeof(List<List<int>>), "[[1,2],[3,4]]").Returns(new List<List<int>> { new() { 1, 2 }, new() { 3, 4} });
+            yield return new TestCaseData(typeof(HashSet<int>), "[1,2]").Returns(new HashSet<int> { 1, 2 });
             yield return new TestCaseData(typeof(int[][]), "[[1,2],[3,4]]").Returns(new[] { new[] { 1, 2 }, new[] { 3, 4 } });
             yield return new TestCaseData(typeof((string, int)), "{\"Item1\":\"A\",\"Item2\":1}").Returns(("A", 1));
             yield return new TestCaseData(typeof(Dictionary<int, int>), "{\"1\":2,\"2\":3}").Returns(new Dictionary<int, int> { [1] = 2, [2] = 3 });
@@ -124,7 +125,7 @@ public class JsonUtilsTests
             yield return new TestCaseData(typeof(Dictionary<int, Dictionary<int, int>>), "{\"1\":{\"2\":3,\"3\":4},\"2\":{\"3\":4}}").Returns(new Dictionary<int, Dictionary<int, int>> { [1] = new() { [2] = 3, [3] = 4 }, [2] = new() { [3] = 4 } });
             yield return new TestCaseData(typeof(NestedClass), "{Enum:1,Integer:5}").Returns(new NestedClass { Enum = TestEnum.Value3, Integer = 5});
             yield return new TestCaseData(typeof(NestedClass), "{\"Enum\":1,\"Integer\":5}").Returns(new NestedClass { Enum = TestEnum.Value3, Integer = 5});
-            yield return new TestCaseData(typeof(TestClass), "{\"NestedClass\":{\"Bool\":true,\"Double\":3.141592653589793,\"Integer\":5,\"DateTime\":\"2024-01-11T14:15:16+05:00\",\"Time\":\"1.02:03:04.0050060\",\"StringArray\":[\"A\",\"B\",\"C\"],\"StringEnumerable\":[\"K\",\"L\",\"M\"],\"StringList\":[\"X\",\"Y\",\"Z\"],\"Dictionary\":{\"1\":\"One\",\"2\":\"Two\",\"3\":\"Three\"}},\"Classes\":[{},{\"Enum\":-1},{\"Integer\":0},{\"Integer\":1,\"Enum\":1}],\"ClassesDictionary\":{\"0\":{\"Integer\":0},\"1\":{\"Integer\":1},\"2\":{\"Integer\":2}},\"String\":\"Hello\"}").Returns(
+            yield return new TestCaseData(typeof(TestClass), "{\"NestedClass\":{\"Bool\":true,\"Double\":3.141592653589793,\"Integer\":5,\"DateTime\":\"2024-01-11T14:15:16+05:00\",\"Time\":\"1.02:03:04.0050060\",\"HashSet\":[1,2,3],\"StringArray\":[\"A\",\"B\",\"C\"],\"StringEnumerable\":[\"K\",\"L\",\"M\"],\"StringList\":[\"X\",\"Y\",\"Z\"],\"Dictionary\":{\"1\":\"One\",\"2\":\"Two\",\"3\":\"Three\"}},\"Classes\":[{},{\"Enum\":-1},{\"Integer\":0},{\"Integer\":1,\"Enum\":1}],\"ClassesDictionary\":{\"0\":{\"Integer\":0},\"1\":{\"Integer\":1},\"2\":{\"Integer\":2}},\"String\":\"Hello\"}").Returns(
                 new TestClass
                 {
                     String = "Hello",
@@ -135,6 +136,7 @@ public class JsonUtilsTests
                         Integer = 5,
                         DateTime = new DateTime(2024, 01, 11, 14, 15, 16, DateTimeKind.Local),
                         Time = new TimeSpan(days: 1, hours: 2, minutes: 3, seconds: 4, milliseconds: 5, microseconds: 6),
+                        HashSet = new HashSet<int> { 1, 2, 3 },
                         StringArray = new[] { "A", "B", "C" },
                         StringEnumerable = new[] { "K", "L", "M" },
                         StringList = new List<string> { "X", "Y", "Z" },
