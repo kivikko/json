@@ -103,6 +103,7 @@ public class JsonUtilsTests
             yield return new TestCaseData(typeof(double), "1.2").Returns(1.2);
             yield return new TestCaseData(typeof(int), "1").Returns(1);
             yield return new TestCaseData(typeof(string), "\"Hello\"").Returns("Hello");
+            yield return new TestCaseData(typeof(string), "\"\\\" \\\\ Hello \\\\ \n\t World \\\"\"").Returns("\" \\ Hello \\ \n\t World \"");
             yield return new TestCaseData(typeof(string), "").Returns(null);
             yield return new TestCaseData(typeof(string), "null").Returns(null);
             yield return new TestCaseData(typeof(Guid), "da603ef1-6f9f-4303-bc09-3feb947d3ee3").Returns(Guid.Parse("da603ef1-6f9f-4303-bc09-3feb947d3ee3"));
@@ -171,6 +172,8 @@ public class JsonUtilsTests
             yield return new TestCaseData(("Hello", new List<int> { 1, 2 })).Returns("{\"Item1\":\"Hello\",\"Item2\":[1,2]}");
             yield return new TestCaseData(1.2).Returns("1.2");
             yield return new TestCaseData("Hello").Returns("\"Hello\"");
+            yield return new TestCaseData("\"Hello\"").Returns("\"\\\"Hello\\\"\"");
+            yield return new TestCaseData("\"'Hello'\" \\ \n\t World").Returns("\"\\\"'Hello'\\\" \\\\ \\n\\t World\"");
             yield return new TestCaseData(Guid.Parse("da603ef1-6f9f-4303-bc09-3feb947d3ee3")).Returns("\"da603ef1-6f9f-4303-bc09-3feb947d3ee3\"");
             yield return new TestCaseData(TestEnum.Value1).Returns("-1");
             yield return new TestCaseData(TestEnum.Value2).Returns("0");
@@ -184,6 +187,7 @@ public class JsonUtilsTests
             yield return new TestCaseData(new Dictionary<int, int> { [1] = 2, [2] = 3 }).Returns("{\"1\":2,\"2\":3}");
             yield return new TestCaseData(new Dictionary<int, Dictionary<int, int>> { [1] = new() { [2] = 3, [3] = 4 }, [2] = new() { [3] = 4 } }).Returns("{\"1\":{\"2\":3,\"3\":4},\"2\":{\"3\":4}}");
             yield return new TestCaseData(new Dictionary<int, string> { [1] = "A", [2] = "B" }).Returns("{\"1\":\"A\",\"2\":\"B\"}");
+            yield return new TestCaseData(new Dictionary<string, string> { ["a"] = "\"A\"" }).Returns("{\"a\":\"\\\"A\\\"\"}");
             yield return new TestCaseData(new NestedClass()).Returns("{}");
             yield return new TestCaseData(new TestClass
             {

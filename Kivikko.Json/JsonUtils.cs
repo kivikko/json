@@ -118,18 +118,24 @@ public static class JsonUtils
         private object GetPrimitiveFromJson(string json, Type type)
         {
             var inQuotes = false;
-            
+            var slash = false;
             while (_index < json.Length)
             {
                 switch (json[_index])
                 {
-                    case '"': inQuotes = !inQuotes; break;
+                    case '"' when !slash: inQuotes = !inQuotes; break;
+                    case '"': slash = false; break;
                     case ']' when !inQuotes: goto quit;
                     case '}' when !inQuotes: goto quit;
                     case ',' when !inQuotes: goto quit;
                     case ':' when !inQuotes: goto quit;
+                    case '\\' when !slash: slash = true; break;
+                    case 'n' when slash: slash = false; _stringBuilder.Append("\\"); break; 
+                    case 'r' when slash: slash = false; _stringBuilder.Append("\\"); break; 
+                    case 't' when slash: slash = false; _stringBuilder.Append("\\"); break; 
+                    case { } when slash: slash = false; break; 
                 }
-                _stringBuilder.Append(json[_index]);
+                if (!slash) _stringBuilder.Append(json[_index]);
                 _index++;
             }
             quit:
@@ -387,9 +393,26 @@ public static class JsonUtils
             [typeof(ulong)]    = json => ulong  .TryParse(json.Trim(Quote), out var value) ? value : default,
             [typeof(short)]    = json => short  .TryParse(json.Trim(Quote), out var value) ? value : default,
             [typeof(ushort)]   = json => ushort .TryParse(json.Trim(Quote), out var value) ? value : default,
-            [typeof(string)]   = json => json is null or "null" or "" ? null : json.Trim(Quote),
+            [typeof(string)]   = json => json is null or "null" or "" ? null : TrimQuotesOneTime(json),
             [typeof(Guid)]     = json => Guid   .TryParse(json.Trim(Quote), out var value) ? value : default,
         };
+
+        private static string TrimQuotesOneTime(string value)
+        {
+            if (value.Length < 2)
+                return value;
+
+            var startChar = value[0];
+            var endChar = value[value.Length - 1];
+
+            return (startChar, endChar) switch
+            {
+                ('"', '"') => value.Substring(1, value.Length - 2),
+                ('"',  _ ) => value.Substring(1),
+                ( _ , '"') => value.Substring(0, value.Length - 1),
+                _ => value
+            };
+        }
         
         private static object GetEnumFromJson(string json, Type type) =>
             Enum.ToObject(type, int.TryParse(json.Trim(Quote), out var value) ? value : 0);
@@ -428,7 +451,7 @@ public static class JsonUtils
             
             switch (obj)
             {
-                case string str: return $"\"{str}\"";
+                case string str: return StringToJson(str);
                 case IDictionary dictionary: return new JsonWriter(_ignoreNullOrDefaultValues).ToJson(dictionary);
                 case IEnumerable enumerable: return new JsonWriter(_ignoreNullOrDefaultValues).ToJson(enumerable);
             }
@@ -454,7 +477,26 @@ public static class JsonUtils
 
             return _stringBuilder.ToString();
         }
-        
+
+        private string StringToJson(string str)
+        {
+            _stringBuilder.Append("\"");
+            foreach (var c in str)
+            {
+                switch (c)
+                {
+                    case '\\': _stringBuilder.Append(@"\\");  break;
+                    case '\"': _stringBuilder.Append("\\\""); break;
+                    case '\n': _stringBuilder.Append("\\n");  break;
+                    case '\r': _stringBuilder.Append("\\r");  break;
+                    case '\t': _stringBuilder.Append("\\t");  break;
+                    default:   _stringBuilder.Append(c);      break;
+                }
+            }
+            _stringBuilder.Append("\"");
+            return _stringBuilder.ToString();
+        }
+
         private static bool IsDefaultValue(Type type, object obj)
         {
             if (obj is null) return true;
