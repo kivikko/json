@@ -276,6 +276,9 @@ public static class JsonUtils
                 
             if (string.IsNullOrWhiteSpace(json))
                 return dictionary;
+
+            if (IsNullString(json))
+                return dictionary;
             
             var keyType   = type.GenericTypeArguments.ElementAtOrDefault(0);
             var valueType = type.GenericTypeArguments.ElementAtOrDefault(1);
@@ -316,6 +319,9 @@ public static class JsonUtils
             
             if (elementType is null)
                 return Array.Empty<object>();
+
+            if (IsNullString(json))
+                return Array.Empty<object>();
             
             while (_index < json.Length)
             {
@@ -346,6 +352,11 @@ public static class JsonUtils
 
             return list;
         }
+
+        private bool IsNullString(string json) =>
+            _index < json.Length + 3 &&
+            json[_index] is 'n' &&
+            json.Substring(_index, 4) is "null";
 
         private static object GetNullableValueFromJson(string json, Type type) => IsNullableType(type)
             ? json is not (null or "null" or "")
@@ -422,8 +433,6 @@ public static class JsonUtils
                 case IEnumerable enumerable: return new JsonWriter(_ignoreNullOrDefaultValues).ToJson(enumerable);
             }
 
-            var hasContent = false;
-
             _stringBuilder.Append("{");
             
             foreach (var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
@@ -436,10 +445,9 @@ public static class JsonUtils
                 _stringBuilder.Append("\":");
                 _stringBuilder.Append(new JsonWriter(_ignoreNullOrDefaultValues).WriteToJson(value));
                 _stringBuilder.Append(",");
-                hasContent = true;
             }
 
-            if (hasContent)
+            if (_stringBuilder[_stringBuilder.Length - 1] == ',')
                 _stringBuilder.Remove(_stringBuilder.Length - 1, 1);
             
             _stringBuilder.Append("}");
@@ -451,7 +459,9 @@ public static class JsonUtils
         {
             if (obj is null) return true;
             if (type.IsValueType && obj.Equals(Activator.CreateInstance(type))) return true;
-            return type == typeof(string) && string.IsNullOrEmpty((string)obj);
+            if (type == typeof(string) && string.IsNullOrEmpty((string)obj)) return true;
+            if (obj is IEnumerable enumerable && !enumerable.OfType<object>().Any()) return true;
+            return false;
         }
         
         private string ToString(object obj) => obj switch
@@ -482,7 +492,8 @@ public static class JsonUtils
                 _stringBuilder.Append(new JsonWriter(_ignoreNullOrDefaultValues).WriteToJson(entry.Value));
                 _stringBuilder.Append(",");
             }
-            _stringBuilder.Remove(_stringBuilder.Length - 1, 1);
+            if (_stringBuilder[_stringBuilder.Length - 1] == ',')
+                _stringBuilder.Remove(_stringBuilder.Length - 1, 1);
             _stringBuilder.Append("}");
             return _stringBuilder.ToString();
         }
@@ -495,7 +506,8 @@ public static class JsonUtils
                 _stringBuilder.Append(new JsonWriter(_ignoreNullOrDefaultValues).WriteToJson(obj));
                 _stringBuilder.Append(",");
             }
-            _stringBuilder.Remove(_stringBuilder.Length - 1, 1);
+            if (_stringBuilder[_stringBuilder.Length - 1] == ',')
+                _stringBuilder.Remove(_stringBuilder.Length - 1, 1);
             _stringBuilder.Append("]");
             return _stringBuilder.ToString();
         }
@@ -511,7 +523,8 @@ public static class JsonUtils
                 _stringBuilder.Append(new JsonWriter(_ignoreNullOrDefaultValues).WriteToJson(tuple[i]));
                 _stringBuilder.Append(",");
             }
-            _stringBuilder.Remove(_stringBuilder.Length - 1, 1);
+            if (_stringBuilder[_stringBuilder.Length - 1] == ',')
+                _stringBuilder.Remove(_stringBuilder.Length - 1, 1);
             _stringBuilder.Append("}");
             return _stringBuilder.ToString();
         }
