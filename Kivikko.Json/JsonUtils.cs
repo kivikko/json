@@ -27,21 +27,21 @@ public static class JsonUtils
         new JsonWriter(ignoreNullOrDefaultValues).WriteToJson(obj);
 
     public static bool TryLoad<T>(string path, out T value)
-        where T : class, new() =>
+        where T : class =>
         TryLoad(path, Encoding.Default, out value);
 
     public static bool TryLoad<T>(string path, Encoding encoding, out T value)
-        where T : class, new()
+        where T : class
     {
         if (!File.Exists(path))
         {
-            value = new T();
+            value = default;
             return false;
         }
         
         var json = File.ReadAllText(path, encoding);
         var deserializeObject = FromJson<T>(json);
-        value = deserializeObject ?? new T();
+        value = deserializeObject;
         
         return deserializeObject is not null;
     }

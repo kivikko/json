@@ -92,6 +92,24 @@ public class JsonUtilsTests
         return actualJson;
     }
 
+    [Test]
+    public void SaveLoadTest()
+    {
+        var items = new[] { "item 1", "item 2", "item 3" };
+        var fileName = Path.ChangeExtension(Path.GetTempFileName(), "json");
+        JsonUtils.Save(fileName, items, Encoding.UTF8);
+        Assert.That(File.Exists(fileName), Is.True);
+
+        var loadedItems = JsonUtils.TryLoad<string[]>(fileName, Encoding.UTF8, out var value) ? value : null;
+        Assert.That(loadedItems, Is.Not.Null);
+        Assert.That(loadedItems, Has.Length.EqualTo(items.Length));
+        Assert.That(loadedItems, Is.EquivalentTo(items));
+        
+        File.Delete(fileName);
+        Console.WriteLine(fileName);
+        Assert.That(File.Exists(fileName), Is.False);
+    }
+
     private class TestCases
     {
         public static IEnumerable<TestCaseData> FromJsonCases()
