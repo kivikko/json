@@ -3,11 +3,24 @@ using Kivikko.Json.Tests.Models.Model1;
 using Kivikko.Json.Tests.Models.Model2;
 using Kivikko.Json.Tests.Models.Model3;
 using Kivikko.Json.Tests.Models.Model4;
+using Kivikko.Json.Tests.Models.Model5;
 
 namespace Kivikko.Json.Tests;
 
 public class JsonUtilsTests
 {
+    [Test]
+    public void DoubleTest()
+    {
+        const double value = 1e30;
+        var json     = JsonUtils.ToJson(new DoubleTest { Value = value });
+        Console.WriteLine(json);
+        
+        var fromJsom = JsonUtils.FromJson<DoubleTest>(json);
+        Console.WriteLine(fromJsom.Value);
+        Assert.That(fromJsom.Value, Is.EqualTo(value));
+    }
+    
     [Test]
     public void FromJsonProductRangeTest()
     {

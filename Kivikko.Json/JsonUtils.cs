@@ -192,6 +192,8 @@ public static class JsonUtils
                             else
                             {
                                 _index++;
+                                memberName = null;
+                                isValueReading = false;
                                 continue;
                             }
                             
@@ -286,9 +288,15 @@ public static class JsonUtils
             if (IsNullString(json))
                 return dictionary;
             
-            var keyType   = type.GenericTypeArguments.ElementAtOrDefault(0);
-            var valueType = type.GenericTypeArguments.ElementAtOrDefault(1);
-            
+            var genericTypeArguments = type.GenericTypeArguments.Length switch
+            {
+                < 2 => type.GetInterfaces().FirstOrDefault(x => x.IsGenericType && x.Name == nameof(IDictionary) + "`2")?.GenericTypeArguments,
+                _ => type.GenericTypeArguments
+            };
+
+            var keyType   = genericTypeArguments?.ElementAtOrDefault(0);
+            var valueType = genericTypeArguments?.ElementAtOrDefault(1);
+
             object key = null;
                 
             while (_index < json.Length)
