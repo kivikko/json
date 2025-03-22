@@ -18,10 +18,10 @@ public static class JsonUtils
         : new T();
 
     public static T FromJson<T>(string json) =>
-        new JsonReader().ReadFromJson<T>(json);
+        new JsonReader().ReadFromJson<T>(json.ToCharArray());
 
     public static object FromJson(string json, Type type) =>
-        new JsonReader().ReadFromJson(json, type);
+        new JsonReader().ReadFromJson(json.ToCharArray(), type);
 
     public static string ToJson(object obj, bool ignoreNullOrDefaultValues = true) =>
         new JsonWriter(ignoreNullOrDefaultValues).WriteToJson(obj);
@@ -81,16 +81,16 @@ public static class JsonUtils
         private readonly StringBuilder _stringBuilder = new();
         private int _index;
 
-        public T ReadFromJson<T>(string json) =>
+        public T ReadFromJson<T>(char[] json) =>
             ReadFromJson(json, typeof(T)) is T fromJson ? fromJson : default;
 
-        public object ReadFromJson(string json, Type type)
+        public object ReadFromJson(char[] json, Type type)
         {
             _index = 0;
             return FromJsonPrivate(json, type);
         }
 
-        private object FromJsonPrivate(string json, Type type)
+        private object FromJsonPrivate(char[] json, Type type)
         {
             if (type.IsPrimitive ||
                 type.IsEnum ||
@@ -115,7 +115,7 @@ public static class JsonUtils
             return GetObjectFromJson(json, type);
         }
 
-        private object GetPrimitiveFromJson(string json, Type type)
+        private object GetPrimitiveFromJson(char[] json, Type type)
         {
             var inQuotes = false;
             var slash = false;
@@ -144,9 +144,9 @@ public static class JsonUtils
             return GetNullableValueFromJson(stringValue, type);
         }
 
-        private object GetObjectFromJson(string json, Type type)
+        private object GetObjectFromJson(char[] json, Type type)
         {
-            if (string.IsNullOrWhiteSpace(json))
+            if (json.Length is 0)
                 return default;
 
             var instance = Activator.CreateInstance(type);
@@ -169,7 +169,8 @@ public static class JsonUtils
                     default:
                         if (isNameReading)
                         {
-                            _stringBuilder.Append(json[_index]);
+                            if (json[_index] is not (' ' or '\r' or '\n'))
+                                _stringBuilder.Append(json[_index]);
                             _index++;
                         }
                         else if (memberName is not null)
@@ -278,11 +279,11 @@ public static class JsonUtils
             }
         }
         
-        private IDictionary GetDictionaryFromJson(string json, Type type)
+        private IDictionary GetDictionaryFromJson(char[] json, Type type)
         {
             var dictionary = (IDictionary)Activator.CreateInstance(type);
                 
-            if (string.IsNullOrWhiteSpace(json))
+            if (json.Length is 0)
                 return dictionary;
 
             if (IsNullString(json))
@@ -326,7 +327,7 @@ public static class JsonUtils
             return dictionary;
         }
 
-        private IEnumerable GetEnumerableFromJson(string json, Type type)
+        private IEnumerable GetEnumerableFromJson(char[] json, Type type)
         {
             var list = new List<object>();
             var elementType = type.IsArray ? type.GetElementType() : type.GenericTypeArguments.FirstOrDefault();
@@ -367,10 +368,10 @@ public static class JsonUtils
             return list;
         }
 
-        private bool IsNullString(string json) =>
+        private bool IsNullString(char[] json) =>
             _index < json.Length + 3 &&
             json[_index] is 'n' &&
-            json.Substring(_index, 4) is "null";
+            json.Skip(_index).Take(4) is "null";
 
         private static object GetNullableValueFromJson(string json, Type type) => IsNullableType(type)
             ? json is not (null or "null" or "")
