@@ -77,7 +77,7 @@ public class JsonUtilsTests
         // Console.WriteLine($"JsonConvert\n-----------\n{expectedObject}");
         // Console.WriteLine();
         
-        Console.WriteLine($"JsonUtils\n---------\n{actualObject}");
+        Console.WriteLine($"JsonUtils\n---------\n{JsonUtils.ToJson(actualObject)}");
 
         // Assert.That(actualObject, Is.EqualTo(expectedObject));
         

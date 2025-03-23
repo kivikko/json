@@ -121,21 +121,27 @@ public static class JsonUtils
             var slash = false;
             while (_index < json.Length)
             {
-                switch (json[_index])
+                var c = json[_index];
+                switch (c, inQuotes, slash)
                 {
-                    case '"' when !slash: inQuotes = !inQuotes; break;
-                    case '"': slash = false; break;
-                    case ']' when !inQuotes: goto quit;
-                    case '}' when !inQuotes: goto quit;
-                    case ',' when !inQuotes: goto quit;
-                    case ':' when !inQuotes: goto quit;
-                    case '\\' when !slash: slash = true; break;
-                    case 'n' when slash: slash = false; _stringBuilder.Append("\\"); break; 
-                    case 'r' when slash: slash = false; _stringBuilder.Append("\\"); break; 
-                    case 't' when slash: slash = false; _stringBuilder.Append("\\"); break; 
-                    case { } when slash: slash = false; break; 
+                    case ('"',  _,     false): inQuotes = !inQuotes; break;
+                    case ('"',  _,     _    ): slash = false; break;
+                    case (']',  false, _    ): goto quit;
+                    case ('}',  false, _    ): goto quit;
+                    case (',',  false, _    ): goto quit;
+                    case (':',  false, _    ): goto quit;
+                    case (' ',  false, _    ): goto next;
+                    case ('\n', false, _    ): goto next;
+                    case ('\r', false, _    ): goto next;
+                    case ('\t', false, _    ): goto next;
+                    case ('\\', _,     false): slash = true; goto next;
+                    case ('n',  _,     true ): slash = false; _stringBuilder.Append("\\"); break; 
+                    case ('r',  _,     true ): slash = false; _stringBuilder.Append("\\"); break; 
+                    case ('t',  _,     true ): slash = false; _stringBuilder.Append("\\"); break; 
+                    case (_,    _,     true ): slash = false; break;
                 }
-                if (!slash) _stringBuilder.Append(json[_index]);
+                _stringBuilder.Append(c);
+                next:
                 _index++;
             }
             quit:
@@ -150,131 +156,133 @@ public static class JsonUtils
                 return default;
 
             var instance = Activator.CreateInstance(type);
-            var isNameReading = false;
-            var isValueReading = false;
+            var state = State.Default;
             
             string memberName = null;
             
             while (_index < json.Length)
             {
-                switch (json[_index])
+               var c = json[_index];
+                switch (c, state)
                 {
-                    case '{' when !isNameReading && !isValueReading: _index++; StartNameReading(); continue;
-                    case '"' when !isNameReading && !isValueReading: _index++; StartNameReading(); continue;
-                    case '"' when isNameReading:   _index++; continue;
-                    case ':' when isNameReading:   _index++; StartValueReading(); continue;
-                    case ',' when !isValueReading: _index++; StartNameReading(); continue;
-                    case '}' when !isValueReading: _index++; return instance;
-                        
-                    default:
-                        if (isNameReading)
+                    case ('{',   State.Default  ): _index++; state = State.WaitName; continue;
+                    case (',',   State.Default  ): _index++; state = State.WaitName; continue;
+                    case ('}',   State.WaitName ): _index++; return instance;
+                    case (' ',   State.WaitName ): _index++; continue;
+                    case ('\n',  State.WaitName ): _index++; continue;
+                    case ('\r',  State.WaitName ): _index++; continue;
+                    case ('\t',  State.WaitName ): _index++; continue;
+                    case ('"',   State.WaitName ): _index++; state = State.ReadName;   continue;
+                    case (_,     State.WaitName ): _index++; state = State.ReadName; _stringBuilder.Append(c); continue;
+                    case ('"',   State.ReadName ): _index++; state = State.Default;    continue;
+                    case (':',   State.ReadName ): _index++; ReadValue();              continue;
+                    case (_,     State.ReadName ): _index++; _stringBuilder.Append(c); continue;
+                    case (':',   State.Default  ): _index++; ReadValue();              continue;
+                    case ('}',   State.Default  ): _index++; return instance;
+                    case (_, not State.ReadValue): _index++; continue;
+                    case (_,     State.ReadValue) when memberName is not null:
+                    {
+                        Type propertyType;
+                        Action<object> setValue;
+
+                        if (type.GetProperty(memberName, BindingFlags.Public | BindingFlags.Instance) is { } property)
                         {
-                            if (json[_index] is not (' ' or '\r' or '\n'))
-                                _stringBuilder.Append(json[_index]);
-                            _index++;
+                            propertyType = property.PropertyType;
+                            setValue = propertyValue => property.SetValue(instance, propertyValue);
                         }
-                        else if (memberName is not null)
+
+                        else if (type.GetField(memberName, BindingFlags.Public | BindingFlags.Instance) is { } filed)
                         {
-                            Type propertyType;
-                            Action<object> setValue;
+                            propertyType = filed.FieldType;
+                            setValue = propertyValue => filed.SetValue(instance, propertyValue);
+                        }
 
-                            if (type.GetProperty(memberName, BindingFlags.Public | BindingFlags.Instance) is { } property)
+                        else
+                        {
+                            _index++;
+                            Reset();
+                            continue;
+                        }
+
+                        var value = FromJsonPrivate(json, propertyType);
+
+                        if (propertyType.IsArray &&
+                            propertyType.GetElementType() is { } arrayElementType &&
+                            value is Array valueArray)
+                        {
+                            var typedArray = Array.CreateInstance(arrayElementType, valueArray.Length);
+                            valueArray.CopyTo(typedArray, 0);
+                            setValue(typedArray);
+                        }
+
+                        else if (propertyType.IsGenericType)
+                        {
+                            var interfaces = propertyType.GetInterfaces();
+
+                            if (interfaces.Any(i => i == typeof(IDictionary)) &&
+                                value is IDictionary valueDictionary)
                             {
-                                propertyType = property.PropertyType;
-                                setValue = propertyValue => property.SetValue(instance, propertyValue);
+                                var genericArgs = propertyType.GetGenericArguments();
+                                var keyType = genericArgs[0];
+                                var valueType = genericArgs[1];
+                                var typedDictionary = (IDictionary)Activator.CreateInstance(typeof(Dictionary<,>).MakeGenericType(keyType, valueType));
+                                foreach (DictionaryEntry entry in valueDictionary) typedDictionary.Add(entry.Key, entry.Value);
+                                setValue(typedDictionary);
                             }
 
-                            else if (type.GetField(memberName, BindingFlags.Public | BindingFlags.Instance) is { } filed)
+                            else if (
+                                interfaces.Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(ISet<>)) &&
+                                propertyType.GetGenericArguments()[0] is { } setElementType &&
+                                value is ICollection setValueCollection)
                             {
-                                propertyType = filed.FieldType;
-                                setValue = propertyValue => filed.SetValue(instance, propertyValue);
+                                var typedSet = Activator.CreateInstance(typeof(HashSet<>).MakeGenericType(setElementType), setValueCollection);
+                                setValue(typedSet);
                             }
 
-                            else
+                            else if (
+                                interfaces.Any(i => i == typeof(IEnumerable)) &&
+                                propertyType.GetGenericArguments()[0] is { } listElementType &&
+                                value is ICollection valueCollection)
                             {
-                                _index++;
-                                memberName = null;
-                                isValueReading = false;
-                                continue;
+                                var typedList = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(listElementType));
+                                foreach (var v in valueCollection) typedList.Add(v);
+                                setValue(typedList);
                             }
-                            
-                            var value = FromJsonPrivate(json, propertyType);
 
-                            if (propertyType.IsArray &&
-                                propertyType.GetElementType() is { } arrayElementType &&
-                                value is Array valueArray)
-                            {
-                                var typedArray = Array.CreateInstance(arrayElementType, valueArray.Length);
-                                valueArray.CopyTo(typedArray, 0);
-                                setValue(typedArray);
-                            }
-                            
-                            else if (propertyType.IsGenericType)
-                            {
-                                var interfaces = propertyType.GetInterfaces();
-                                
-                                if (interfaces.Any(i => i == typeof(IDictionary)) &&
-                                    value is IDictionary valueDictionary)
-                                {
-                                    var genericArgs = propertyType.GetGenericArguments();
-                                    var keyType = genericArgs[0];
-                                    var valueType = genericArgs[1];
-                                    var typedDictionary = (IDictionary)Activator.CreateInstance(typeof(Dictionary<,>).MakeGenericType(keyType, valueType));
-                                    foreach (DictionaryEntry entry in valueDictionary) typedDictionary.Add(entry.Key, entry.Value);
-                                    setValue(typedDictionary);
-                                }
-                            
-                                else if (
-                                    interfaces.Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(ISet<>)) &&
-                                    propertyType.GetGenericArguments()[0] is { } setElementType &&
-                                    value is ICollection setValueCollection)
-                                {
-                                    var typedSet = Activator.CreateInstance(typeof(HashSet<>).MakeGenericType(setElementType), setValueCollection);
-                                    setValue(typedSet);
-                                }
-                            
-                                else if (
-                                    interfaces.Any(i => i == typeof(IEnumerable)) &&
-                                    propertyType.GetGenericArguments()[0] is { } listElementType &&
-                                    value is ICollection valueCollection)
-                                {
-                                    var typedList = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(listElementType));
-                                    foreach (var v in valueCollection) typedList.Add(v);
-                                    setValue(typedList);
-                                }
-                                
-                                else
-                                {
-                                    setValue(value);
-                                }
-                            }
-                            
                             else
                             {
                                 setValue(value);
                             }
-                            
-                            memberName = null;
-                            isValueReading = false;
                         }
+
                         else
                         {
-                            _index++;
+                            setValue(value);
                         }
+
+                        Reset();
+                        continue;
+                    }
+                    default:
+                        _index++;
                         continue;
                 }
             }
             
             return instance;
 
-            void StartNameReading() => isNameReading = true;
-
-            void StartValueReading()
+            void ReadValue()
             {
-                isNameReading = false;
-                isValueReading = true;
-                if (_stringBuilder.Length <= 0) return;
+                state = State.ReadValue;
+                if (_stringBuilder.Length is 0) return;
                 memberName = _stringBuilder.ToString();
+                _stringBuilder.Clear();
+            }
+
+            void Reset()
+            {
+                state = State.Default;
+                memberName = null;
                 _stringBuilder.Clear();
             }
         }
@@ -286,7 +294,7 @@ public static class JsonUtils
             if (json.Length is 0)
                 return dictionary;
 
-            if (IsNullString(json))
+            if (IsNull(json, _index))
                 return dictionary;
             
             var genericTypeArguments = type.GenericTypeArguments.Length switch
@@ -302,25 +310,15 @@ public static class JsonUtils
                 
             while (_index < json.Length)
             {
-                switch (json[_index])
+                switch (json[_index], key)
                 {
-                    case '{': _index++; continue;
-                    case '"' when key is null: key = FromJsonPrivate(json, keyType); break;
-                    case ':': _index++; continue;
-                    case ',': _index++; continue;
-                    case '}': _index++; return dictionary;
-                        
-                    default:
-                        if (key is not null)
-                        {
-                            dictionary.Add(key, FromJsonPrivate(json, valueType));
-                            key = null;
-                        }
-                        else
-                        {
-                            _index++;
-                        }
-                        continue;
+                    case ('{', null): _index++; continue;
+                    case ('"', null): key = FromJsonPrivate(json, keyType); break;
+                    case (':', _): _index++; continue;
+                    case (',', _): _index++; continue;
+                    case ('}', _): _index++; return dictionary;
+                    case (_, not null): dictionary.Add(key, FromJsonPrivate(json, valueType)); key = null; continue;
+                    default: _index++; continue;
                 }
             }
 
@@ -335,16 +333,24 @@ public static class JsonUtils
             if (elementType is null)
                 return Array.Empty<object>();
 
-            if (IsNullString(json))
+            if (IsNull(json, _index))
                 return Array.Empty<object>();
+            
+            var inBrackets = false;
             
             while (_index < json.Length)
             {
-                switch (json[_index])
+                switch (json[_index], isInBreckets: inBrackets)
                 {
-                    case '[': _index++; continue;
-                    case ',': _index++; continue;
-                    case ']': _index++; goto quit;
+                    case (' ',  _    ): _index++; continue;
+                    case ('\n', _    ): _index++; continue;
+                    case ('\r', _    ): _index++; continue;
+                    case ('\t', _    ): _index++; continue;
+                    case ('[',  false): _index++; inBrackets = true; continue;
+                    case (',',  _    ): _index++; continue;
+                    case (']',  _    ): _index++; goto quit;
+                    case ('"',  false) when IsNull(json.Skip(_index + 1).Take(4)): _index++; goto quit;
+                    case ('n',  false) when IsNull(json.Skip(_index).Take(4)):     _index++; goto quit;
                     default: list.Add(FromJsonPrivate(json, elementType)); break;
                 }
             }
@@ -368,10 +374,16 @@ public static class JsonUtils
             return list;
         }
 
-        private bool IsNullString(char[] json) =>
-            _index < json.Length + 3 &&
-            json[_index] is 'n' &&
-            json.Skip(_index).Take(4) is "null";
+        private static bool IsNull(char[] json, int index) =>
+            index < json.Length + 3 &&
+            json[index] is 'n' &&
+            IsNull(json.Skip(index).Take(4));
+
+        private static bool IsNull(IEnumerable<char> c)
+        {
+            var a = c.ToArray();
+            return a.Length > 3 && a[0] is 'n' && a[1] is 'u' && a[2] is 'l' && a[3] is 'l';
+        }
 
         private static object GetNullableValueFromJson(string json, Type type) => IsNullableType(type)
             ? json is not (null or "null" or "")
@@ -440,6 +452,7 @@ public static class JsonUtils
         
         private static bool IsNullableType(Type type) => IsGenericType(type, typeof(Nullable<>));
         private static bool IsGenericType(Type type, Type genericType) => type.IsGenericType && type.GetGenericTypeDefinition() == genericType;
+        private enum State { Default, WaitName, ReadName, ReadValue }
     }
 
     private class JsonWriter
